@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1007688515714",
+    "project_id": "orally-porject-serve",
+    "storage_bucket": "orally-porject-serve.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1007688515714:android:034226e00923d50a6bb49b",
+        "android_client_info": {
+          "package_name": "com.example.orally"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrij4cZq6bfhBFsbKi2KHm8gSbmAtBaBM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
