@@ -45,8 +45,10 @@ import kotlin.collections.forEach
 fun NotesContent(modifier: Modifier = Modifier) {
     var visible by remember { mutableStateOf(false) }
     var notes by remember { mutableStateOf<List<DocumentSnapshot>>(emptyList()) }
+    var deletedNotes by remember { mutableStateOf<List<DocumentSnapshot>>(emptyList()) }
     var selectedNote by remember { mutableStateOf<DocumentSnapshot?>(null) }
     var showEditor by remember { mutableStateOf(false) }
+    var showDeleted by remember { mutableStateOf(false) }
 
     val db = FirebaseFirestore.getInstance()
     val user = FirebaseAuth.getInstance().currentUser
@@ -55,9 +57,16 @@ fun NotesContent(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) {
         visible = true
         if (uid != null) {
-            db.collection("users").document(uid).collection("notes")
+            val userDoc = db.collection("users").document(uid)
+
+            userDoc.collection("notes")
                 .addSnapshotListener { value, _ ->
                     if (value != null) notes = value.documents
+                }
+
+            userDoc.collection("recently_deleted")
+                .addSnapshotListener { value, _ ->
+                    if (value != null) deletedNotes = value.documents
                 }
         }
     }
@@ -101,7 +110,10 @@ fun NotesContent(modifier: Modifier = Modifier) {
         } else {
             NotesListView(
                 notes = notes,
+                deletedNotes = deletedNotes,
                 visible = visible,
+                showDeleted = showDeleted,
+                onToggleDeleted = { showDeleted = !showDeleted },
                 onAddNote = {
                     selectedNote = null
                     showEditor = true
@@ -112,9 +124,18 @@ fun NotesContent(modifier: Modifier = Modifier) {
                 },
                 onDeleteNote = { note ->
                     uid?.let {
-                        db.collection("users").document(it)
-                            .collection("notes").document(note.id)
-                            .delete()
+                        val userDoc = db.collection("users").document(it)
+                        val noteData = note.data ?: return@let
+                        userDoc.collection("recently_deleted").document(note.id).set(noteData)
+                        userDoc.collection("notes").document(note.id).delete()
+                    }
+                },
+                onRestoreNote = { note ->
+                    uid?.let {
+                        val userDoc = db.collection("users").document(it)
+                        val noteData = note.data ?: return@let
+                        userDoc.collection("notes").document(note.id).set(noteData)
+                        userDoc.collection("recently_deleted").document(note.id).delete()
                     }
                 },
                 modifier = modifier
@@ -190,10 +211,14 @@ fun NoteEditor(
 @Composable
 fun NotesListView(
     notes: List<DocumentSnapshot>,
+    deletedNotes: List<DocumentSnapshot>,
     visible: Boolean,
+    showDeleted: Boolean,
+    onToggleDeleted: () -> Unit,
     onAddNote: () -> Unit,
     onEditNote: (DocumentSnapshot) -> Unit,
     onDeleteNote: (DocumentSnapshot) -> Unit,
+    onRestoreNote: (DocumentSnapshot) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -252,6 +277,47 @@ fun NotesListView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("➕ New Note")
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        AnimatedVisibility(visible) {
+            OutlinedButton(
+                onClick = onToggleDeleted,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (showDeleted) "Hide Recently Deleted" else "Show Recently Deleted")
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        AnimatedVisibility(visible && showDeleted && deletedNotes.isNotEmpty()) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Recently Deleted", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(16.dp))
+                deletedNotes.forEach { note ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(note.getString("title") ?: "Untitled", style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(4.dp))
+                            Text(note.getString("content") ?: "", style = MaterialTheme.typography.bodyMedium)
+
+                            Spacer(Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                                TextButton(onClick = { onRestoreNote(note) }) {
+                                    Text("Restore")
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
