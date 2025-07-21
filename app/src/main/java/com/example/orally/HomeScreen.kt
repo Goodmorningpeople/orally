@@ -2,13 +2,16 @@ package com.example.orally
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
@@ -97,7 +100,6 @@ fun HomeContent(modifier: Modifier = Modifier, onNavigateToTab: (Int) -> Unit) {
 
     var userName by remember { mutableStateOf("User") }
     var streak by remember { mutableStateOf(0) }
-    var tip by remember { mutableStateOf("Loading...") }
     var visible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -135,166 +137,122 @@ fun HomeContent(modifier: Modifier = Modifier, onNavigateToTab: (Int) -> Unit) {
                     }
                 }
 
-                val tips = listOf(
-                    "Brush your teeth for at least 2 minutes twice daily",
-                    "Don't forget to floss daily to remove plaque between teeth",
-                    "Use fluoride toothpaste to strengthen your enamel",
-                    "Replace your toothbrush every 3-4 months",
-                    "Rinse with mouthwash after brushing and flossing",
-                    "Limit sugary and acidic foods and drinks",
-                    "Visit your dentist regularly for check-ups",
-                    "Don't brush immediately after eating acidic foods",
-                    "Use a soft-bristled toothbrush to protect your gums",
-                    "Stay hydrated - water helps wash away bacteria"
-                )
-
-                val savedTip = doc.getString("dailyTip")
-                val savedTipDate = doc.getString("tipDate")
-
-                tip = if (savedTipDate != currentDate) {
-                    tips.random().also {
-                        userDoc.update(mapOf("dailyTip" to it, "tipDate" to currentDate))
-                    }
-                } else {
-                    savedTip ?: tips.random()
-                }
-
             } catch (e: Exception) {
-                tip = "Stay consistent and brush twice a day!"
                 streak = 0
             }
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        AnimatedVisibility(visible) {
-            Text("Hello, $userName 👋", style = MaterialTheme.typography.headlineMedium)
-        }
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            AnimatedVisibility(visible) {
+                Text(
+                    text = "Welcome back",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+            }
 
-        Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
 
-        AnimatedVisibility(visible) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            AnimatedVisibility(visible) {
                 Card(
+                    shape = RoundedCornerShape(20.dp),
                     modifier = Modifier
-                        .weight(1f)
-                        .aspectRatio(1f),
-                    shape = RoundedCornerShape(28.dp)
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
                 ) {
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
+                            .padding(vertical = 28.dp, horizontal = 20.dp),
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.Start
                     ) {
-                        Text("Streak", style = MaterialTheme.typography.titleLarge)
+                        Text("Current Streak", style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.height(8.dp))
-                        Text("$streak", style = MaterialTheme.typography.displayMedium)
-                        Text("🔥", style = MaterialTheme.typography.headlineLarge)
-                    }
-                }
-
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .aspectRatio(1f),
-                    shape = RoundedCornerShape(28.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Today", style = MaterialTheme.typography.titleLarge)
-                        Spacer(Modifier.height(8.dp))
-                        if (streak > 0) {
-                            Text("✅", style = MaterialTheme.typography.displayMedium)
-                            Text("Done!", style = MaterialTheme.typography.titleMedium)
-                        } else {
-                            Text("⏰", style = MaterialTheme.typography.displayMedium)
-                            Text("Pending", style = MaterialTheme.typography.titleMedium)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "$streak ",
+                                style = MaterialTheme.typography.headlineLarge
+                            )
+                            Text("🔥", style = MaterialTheme.typography.headlineLarge)
                         }
                     }
                 }
             }
-        }
 
-        Spacer(Modifier.height(32.dp))
-
-        AnimatedVisibility(visible) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                Column(
+            AnimatedVisibility(visible) {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
                 ) {
-                    Text("🦷 Oral Tip Of The Day", style = MaterialTheme.typography.titleLarge)
-                    Text(tip, style = MaterialTheme.typography.bodyLarge)
-                    Text("💡", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.align(Alignment.CenterHorizontally))
+                    Row(
+                        modifier = Modifier
+                            .padding(vertical = 28.dp, horizontal = 20.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { day ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f), CircleShape)
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(day, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
                 }
             }
-        }
 
-        Spacer(Modifier.height(24.dp))
-
-        AnimatedVisibility(visible) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+            AnimatedVisibility(visible) {
                 Card(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(100.dp)
+                        .fillMaxWidth()
                         .clickable { onNavigateToTab(1) },
                     shape = RoundedCornerShape(20.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        Text("▶️ Go to Practice", style = MaterialTheme.typography.titleMedium)
-                    }
-                }
-
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(100.dp)
-                        .clickable { onNavigateToTab(3) },
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        Text("🏆 View Rewards", style = MaterialTheme.typography.titleMedium)
+                    Row(
+                        modifier = Modifier
+                            .padding(vertical = 28.dp, horizontal = 20.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("📘", style = MaterialTheme.typography.headlineMedium)
+                            Spacer(Modifier.width(12.dp))
+                            Column {
+                                Text("Start a practice", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "Select a topic and start practicing your oral skills.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Text("➡️", style = MaterialTheme.typography.titleLarge)
                     }
                 }
             }
+
+            Spacer(Modifier.height(74.dp))
         }
 
-        Spacer(Modifier.height(74.dp))
-
-        AnimatedVisibility(visible) {
+        AnimatedVisibility(visible, modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp)) {
             Text(
                 text = "Keep up the great work!",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 12.dp)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
